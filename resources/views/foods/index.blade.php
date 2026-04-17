@@ -45,18 +45,21 @@
                                     Edit
                                 </a>
 
-                                @if($food->is_available)
-                                    <form action="{{ route('foods.destroy', $food->id) }}" method="POST" class="d-inline">
-                                        @csrf
-                                        @method('DELETE')
+                                <form action="{{ route('foods.destroy', $food->id) }}" method="POST" class="d-inline">
+                                    @csrf
+                                    @method('DELETE')
+                                    @if($food->is_available)
                                         <button type="submit" class="btn btn-danger btn-sm"
                                             onclick="return confirm('Deactivate this food item?')">
                                             Deactivate
                                         </button>
-                                    </form>
-                                @else
-                                    <button class="btn btn-secondary btn-sm" disabled>Inactive</button>
-                                @endif
+                                    @else
+                                        <button type="submit" class="btn btn-success btn-sm"
+                                            onclick="return confirm('Activate this food item?')">
+                                            Activate
+                                        </button>
+                                    @endif
+                                </form>
                             </td>
                         </tr>
                     @endforeach

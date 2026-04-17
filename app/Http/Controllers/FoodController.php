@@ -80,10 +80,14 @@ class FoodController extends Controller
     public function destroy(FoodItem $food)
     {
         $food->update([
-            'is_available' => false
+            'is_available' => !$food->is_available,
         ]);
 
+        $message = $food->is_available
+            ? 'Food activated successfully.'
+            : 'Food deactivated successfully.';
+
         return redirect()->route('foods.index')
-            ->with('success', 'Food removed (deactivated).');
+            ->with('success', $message);
     }
 }
