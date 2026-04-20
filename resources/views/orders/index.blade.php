@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 
 @section('content')
 <div class="container">
@@ -16,14 +16,14 @@
                     </div>
 
                     <div>
-                        @if($order->status === 'Pending')
-                            <span class="badge bg-warning text-dark">Pending</span>
-                        @elseif($order->status === 'Preparing')
-                            <span class="badge bg-primary">Preparing</span>
-                        @elseif($order->status === 'Completed')
-                            <span class="badge bg-success">Completed</span>
+                        @if($order->billing_status === 'Ordering')
+                            <span class="badge bg-warning text-dark">Ordering</span>
+                        @elseif($order->billing_status === 'Requested')
+                            <span class="badge bg-primary">Requested</span>
+                        @elseif($order->billing_status === 'Paid')
+                            <span class="badge bg-success">Paid</span>
                         @else
-                            <span class="badge bg-secondary">{{ $order->status }}</span>
+                            <span class="badge bg-secondary">{{ $order->billing_status }}</span>
                         @endif
                     </div>
                 </div>
