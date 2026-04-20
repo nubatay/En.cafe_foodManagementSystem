@@ -9,6 +9,11 @@ class FoodController extends Controller
 {
     public function menu()
     {
+        if (!session('table_number')) {
+            return redirect()->route('customer.home')
+                ->with('error', 'Please select your table number first.');
+        }
+
         $foods = FoodItem::active()
             ->orderBy('category')
             ->orderBy('name')
@@ -39,14 +44,39 @@ class FoodController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
             'category' => 'required|string|max:255',
+            'options' => 'nullable|string',
         ]);
+
+        $validated['options'] = null;
+
+        if ($request->filled('options')) {
+            $parsedOptions = [];
+
+            foreach (explode(',', $request->options) as $item) {
+                $parts = array_map('trim', explode(':', $item));
+
+                if (count($parts) === 2) {
+                    $parsedOptions[] = [
+                        'name' => $parts[0],
+                        'price' => (float) $parts[1],
+                    ];
+                }
+            }
+
+            $validated['options'] = !empty($parsedOptions) ? $parsedOptions : null;
+        }
+
+        if ($request->hasFile('image')) {
+            $validated['image'] = $request->file('image')->store('foods', 'public');
+        }
 
         FoodItem::create([
             ...$validated,
-            'is_available' => true
+            'is_available' => true,
         ]);
 
         return redirect()->route('foods.index')
@@ -65,10 +95,35 @@ class FoodController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
             'category' => 'required|string|max:255',
+            'options' => 'nullable|string',
         ]);
+
+        $validated['options'] = null;
+
+        if ($request->filled('options')) {
+            $parsedOptions = [];
+
+            foreach (explode(',', $request->options) as $item) {
+                $parts = array_map('trim', explode(':', $item));
+
+                if (count($parts) === 2) {
+                    $parsedOptions[] = [
+                        'name' => $parts[0],
+                        'price' => (float) $parts[1],
+                    ];
+                }
+            }
+
+            $validated['options'] = !empty($parsedOptions) ? $parsedOptions : null;
+        }
+
+        if ($request->hasFile('image')) {
+            $validated['image'] = $request->file('image')->store('foods', 'public');
+        }
 
         $food->update($validated);
 

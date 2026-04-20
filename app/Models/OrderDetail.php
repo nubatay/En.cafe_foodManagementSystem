@@ -14,6 +14,8 @@ class OrderDetail extends Model
         'food_item_id',
         'qty',
         'price',
+        'option',
+        'status',
     ];
 
     public function order()

@@ -10,12 +10,18 @@ class FoodItem extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name',
-        'description',
-        'price',
-        'stock',
-        'category',
-        'is_available',
+    'name',
+    'description',
+    'image',
+    'price',
+    'stock',
+    'category',
+    'is_available',
+    'options',
+    ];
+
+    protected $casts = [
+        'options' => 'array',
     ];
 
     public function details()
