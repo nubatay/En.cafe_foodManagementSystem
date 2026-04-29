@@ -3,56 +3,41 @@
 @section('content')
 <div class="hero-card p-5 mb-4 text-center">
     <h1 class="display-5 fw-bold mb-3">Welcome to En.cafe</h1>
-    <p class="fs-5 mb-0" style="color: rgba(255,255,255,0.85);">
-        Please enter your table number to start ordering.
-    </p>
 </div>
 
 <div class="row justify-content-center">
     <div class="col-lg-5">
         <div class="card-clean">
-            <div class="card-body p-4">
+            <div class="card-body p-4 text-center">
                 @if(session('table_number'))
-                    <div class="alert alert-info rounded-4">
-                        Current Table Number:
-                        <strong>{{ session('table_number') }}</strong>
+                    <div class="mb-4">
+                        <h3 class="fw-bold mb-3">You are ordering for</h3>
+                        <div class="badge bg-primary p-3" style="font-size: 1.5rem;">
+                            Table {{ session('table_number') }}
+                        </div>
                     </div>
-                @endif
-
-                <form action="{{ route('table.setup.store') }}" method="POST">
-                    @csrf
 
                     <div class="mb-3">
-                        <label for="table_number" class="form-label fw-semibold">Table Number</label>
-                        <input
-                            type="number"
-                            name="table_number"
-                            id="table_number"
-                            class="form-control"
-                            min="1"
-                            value="{{ session('table_number') }}"
-                            required
-                        >
-                    </div>
-
-                    <button type="submit" class="btn btn-primary w-100">
-                        Confirm Table and Start Ordering
-                    </button>
-                </form>
-
-                @if(session('table_number'))
-                    <div class="mt-3 text-center">
-                        <a href="{{ route('menu.index') }}" class="btn btn-outline-dark">
-                            Continue to Menu
+                        <a href="{{ route('menu.index') }}" class="btn btn-primary btn-lg w-100">
+                            Start Ordering
                         </a>
                     </div>
-                @endif
 
-                <div class="mt-3 text-center">
-                    <a href="{{ route('orders.my') }}" class="btn btn-outline-secondary">
-                        View My Orders
-                    </a>
-                </div>
+                    <div>
+                        <a href="{{ route('orders.my') }}" class="btn btn-outline-secondary w-100">
+                            View My Orders
+                        </a>
+                    </div>
+                @else
+                    <div class="alert alert-warning rounded-4" role="alert">
+                        <h5 class="fw-bold mb-2">No Table Assigned</h5>
+                        <p class="mb-0">Please ask staff to provide you with a table QR code or table URL.</p>
+                    </div>
+
+                    <p class="text-muted mt-4">
+                        Once your table is assigned, you'll be able to start ordering.
+                    </p>
+                @endif
             </div>
         </div>
     </div>

@@ -11,28 +11,40 @@ use Illuminate\Support\Facades\DB;
 class OrderController extends Controller
 {
     // =====================================
-    // CUSTOMER: TABLE SETUP PAGE
+    // TABLE START URL - Set table in session
     // =====================================
-    public function showTableSetup()
+    public function startTableSession($id)
     {
-        return view('table.setup');
+        // Validate table ID is a positive integer
+        if (!is_numeric($id) || (int)$id < 1) {
+            return redirect('/')->with('error', 'Invalid table number.');
+        }
+
+        $tableNumber = (int)$id;
+
+        // Save table number to session
+        session(['table_number' => $tableNumber]);
+
+        // If not authenticated, redirect to login
+        if (!auth()->check()) {
+            return redirect()->route('login')
+                ->with('success', "Table {$tableNumber} assigned. Please log in.");
+        }
+
+        // If authenticated, redirect to customer home
+        return redirect()->route('customer.home')
+            ->with('success', "Table {$tableNumber} assigned successfully.");
     }
 
     // =====================================
-    // CUSTOMER: SAVE TABLE NUMBER IN SESSION
+    // TABLE RESET URL - Clear table from session
     // =====================================
-    public function storeTableSetup(Request $request)
+    public function resetTableSession()
     {
-        $request->validate([
-            'table_number' => 'required|integer|min:1',
-        ]);
+        session()->forget('table_number');
 
-        session([
-            'table_number' => $request->table_number
-        ]);
-
-        return redirect()->route('menu.index')
-            ->with('success', 'Table number set successfully.');
+        return redirect()->route('customer.home')
+            ->with('success', 'Table session has been reset.');
     }
 
     // =====================================
@@ -40,58 +52,101 @@ class OrderController extends Controller
     // =====================================
     public function store(Request $request)
     {
-        $tableNumber = session('table_number');
-
-        if (!$tableNumber) {
-            return redirect()->route('customer.home')
-                ->with('error', 'Please set the table number first.');
-        }
-
-        $items = collect($request->items ?? [])->filter(function ($item) {
-            return isset($item['qty']) && (int) $item['qty'] > 0;
-        })->values()->toArray();
-
-        $request->merge(['items' => $items]);
-
-        $request->validate([
-            'items' => 'required|array|min:1',
-            'items.*.id' => 'required|exists:food_items,id',
-            'items.*.qty' => 'required|integer|min:1',
-        ]);
-
-        DB::beginTransaction();
-
         try {
+            $tableNumber = session('table_number');
+
+            if (!$tableNumber) {
+                return redirect()->route('customer.home')
+                    ->with('error', 'Please set the table number first.');
+            }
+
+            $requestedSession = Order::where('table_number', $tableNumber)
+                ->where('billing_status', 'Requested')
+                ->latest('id')
+                ->first();
+
+            if ($requestedSession) {
+                return redirect()->route('orders.my')
+                    ->with('error', 'You already proceeded to the counter. You cannot place another order.');
+            }
+
+            $items = collect($request->items ?? [])->filter(function ($item) {
+                return isset($item['qty']) && (int) $item['qty'] > 0;
+            })->values()->toArray();
+
+            if (empty($items)) {
+                throw new \Exception('Please select at least one item with quantity greater than 0.');
+            }
+
+            $request->merge(['items' => $items]);
+
+            $request->validate([
+                'items' => 'required|array|min:1',
+                'items.*.id' => 'required|exists:food_items,id',
+                'items.*.qty' => 'required|integer|min:1',
+            ]);
+
+            DB::beginTransaction();
+
             $sessionCode = $this->getOrCreateSessionCode($tableNumber);
-
             $total = 0;
+            $validatedItems = [];
 
+            // Validate all items before creating order
             foreach ($request->items as $item) {
-                $food = FoodItem::lockForUpdate()->findOrFail($item['id']);
-                $qty = (int) $item['qty'];
+                $food = FoodItem::lockForUpdate()->find($item['id']);
 
-                if (!$food->is_available) {
-                    throw new \Exception($food->name . ' is not available.');
+                if (!$food) {
+                    throw new \Exception('Food item not found.');
                 }
 
-                if ($food->stock < $qty) {
-                    throw new \Exception('Not enough stock for ' . $food->name . '.');
+                if (!$food->is_available) {
+                    throw new \Exception($food->name . ' is currently unavailable.');
+                }
+
+                $qty = (int) $item['qty'];
+
+                if ($qty <= 0) {
+                    throw new \Exception($food->name . ' quantity must be greater than 0.');
+                }
+
+                if ($qty > $food->stock) {
+                    throw new \Exception('Not enough stock for ' . $food->name . '. Available: ' . $food->stock . ', Requested: ' . $qty);
                 }
 
                 $extraPrice = 0;
                 $selectedOption = $item['option'] ?? null;
 
-                if (!empty($food->options) && $selectedOption) {
+                if (!empty($food->options)) {
+                    if (empty($selectedOption)) {
+                        throw new \Exception($food->name . ' requires selecting an option.');
+                    }
+                    $optionFound = false;
                     foreach ($food->options as $opt) {
                         if (is_array($opt) && ($opt['name'] ?? null) === $selectedOption) {
                             $extraPrice = (float) ($opt['price'] ?? 0);
+                            $optionFound = true;
                             break;
                         }
+                    }
+                    if (!$optionFound) {
+                        throw new \Exception($food->name . ' option "' . $selectedOption . '" does not exist.');
+                    }
+                } else {
+                    if (!empty($selectedOption)) {
+                        throw new \Exception($food->name . ' does not have options.');
                     }
                 }
 
                 $finalPrice = $food->price + $extraPrice;
                 $total += $finalPrice * $qty;
+
+                $validatedItems[] = [
+                    'food' => $food,
+                    'qty' => $qty,
+                    'option' => $selectedOption,
+                    'price' => $finalPrice,
+                ];
             }
 
             // ✅ ALWAYS NEW ORDER (batch)
@@ -111,43 +166,28 @@ class OrderController extends Controller
                 'date' => now(),
             ]);
 
-            foreach ($request->items as $item) {
-                $food = FoodItem::lockForUpdate()->findOrFail($item['id']);
-                $qty = (int) $item['qty'];
-                $selectedOption = $item['option'] ?? null;
-
-                $extraPrice = 0;
-
-                if (!empty($food->options) && $selectedOption) {
-                    foreach ($food->options as $opt) {
-                        if (is_array($opt) && ($opt['name'] ?? null) === $selectedOption) {
-                            $extraPrice = (float) ($opt['price'] ?? 0);
-                            break;
-                        }
-                    }
-                }
-
-                $finalPrice = $food->price + $extraPrice;
-
+            foreach ($validatedItems as $item) {
                 OrderDetail::create([
                     'order_id' => $order->id,
-                    'food_item_id' => $food->id,
-                    'qty' => $qty,
-                    'price' => $finalPrice,
-                    'option' => $selectedOption,
+                    'food_item_id' => $item['food']->id,
+                    'qty' => $item['qty'],
+                    'price' => $item['price'],
+                    'option' => $item['option'],
                     'status' => 'Pending',
                 ]);
 
-                $food->decrement('stock', $qty);
+                $item['food']->decrement('stock', $item['qty']);
             }
 
             DB::commit();
 
             return redirect()->route('orders.my')
                 ->with('success', 'Order placed successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return back()->withErrors($e->errors())->withInput();
         } catch (\Exception $e) {
             DB::rollBack();
-
             return redirect()->back()
                 ->withInput()
                 ->with('error', $e->getMessage());
@@ -259,18 +299,41 @@ class OrderController extends Controller
     // =====================================
     public function updateStatus(Request $request, $id)
     {
-        $request->validate([
-            'status' => 'required|in:Pending,Preparing,Delivered',
-        ]);
+        try {
+            $request->validate([
+                'status' => 'required|in:Pending,Preparing,Delivered',
+            ]);
 
-        $order = Order::with('details')->findOrFail($id);
+            $order = Order::with('details')->find($id);
 
-        foreach ($order->details as $detail) {
-            $detail->status = $request->status;
-            $detail->save();
+            if (!$order) {
+                throw new \Exception('Order not found.');
+            }
+
+            if ($order->billing_status === 'Requested') {
+                throw new \Exception('Cannot update order status. This order has already been requested for billing.');
+            }
+
+            if ($order->billing_status === 'Paid') {
+                throw new \Exception('Cannot update order status. This order has already been paid.');
+            }
+
+            $currentStatuses = $order->details->pluck('status')->unique();
+            if ($currentStatuses->contains('Delivered') && $request->status !== 'Delivered') {
+                throw new \Exception('Cannot move back from Delivered status. Items have already been served.');
+            }
+
+            foreach ($order->details as $detail) {
+                $detail->status = $request->status;
+                $detail->save();
+            }
+
+            return back()->with('success', 'Order batch status updated to ' . $request->status . '.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return back()->withErrors($e->errors());
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
         }
-
-        return back()->with('success', 'Order batch status updated.');
     }
 
     // =====================================
@@ -279,8 +342,9 @@ class OrderController extends Controller
     // =====================================
     private function getOrCreateSessionCode($tableNumber): string
     {
+        // Only reuse sessions that are still active
         $activeOrder = Order::where('table_number', $tableNumber)
-            ->activeSession()
+            ->whereIn('billing_status', ['Ordering', 'Requested'])
             ->latest('id')
             ->first();
 
@@ -288,6 +352,7 @@ class OrderController extends Controller
             return $activeOrder->session_code;
         }
 
+        // If no active session, create next session number
         $lastOrderForTable = Order::where('table_number', $tableNumber)
             ->latest('id')
             ->first();
@@ -298,7 +363,7 @@ class OrderController extends Controller
 
         $lastSession = $lastOrderForTable->session_code;
 
-        if (preg_match('/T\d+\-(\d+)/', $lastSession, $matches)) {
+        if (preg_match('/T' . $tableNumber . '\-(\d+)/', $lastSession, $matches)) {
             $nextNumber = str_pad(((int) $matches[1]) + 1, 3, '0', STR_PAD_LEFT);
             return 'T' . $tableNumber . '-' . $nextNumber;
         }
@@ -308,32 +373,67 @@ class OrderController extends Controller
 
     public function proceedToCounter()
     {
-        $tableNumber = session('table_number');
+        try {
+            $tableNumber = session('table_number');
 
-        if (!$tableNumber) {
-            return redirect()->route('table.setup')
-                ->with('error', 'Please set the table number first.');
+            if (!$tableNumber) {
+                throw new \Exception('No table assigned. Please set the table number first.');
+            }
+
+            $activeOrder = Order::where('table_number', $tableNumber)
+                ->where('billing_status', 'Ordering')
+                ->latest('id')
+                ->first();
+
+            if (!$activeOrder) {
+                $requestedOrder = Order::where('table_number', $tableNumber)
+                    ->where('billing_status', 'Requested')
+                    ->latest('id')
+                    ->first();
+
+                if ($requestedOrder) {
+                    throw new \Exception('Your bill request is already pending. Please wait at the counter.');
+                }
+
+                $paidOrder = Order::where('table_number', $tableNumber)
+                    ->where('billing_status', 'Paid')
+                    ->latest('id')
+                    ->first();
+
+                if ($paidOrder) {
+                    throw new \Exception('Your session has already been paid.');
+                }
+
+                throw new \Exception('No active orders found for this table. Please place an order first.');
+            }
+
+            // Check if all items are delivered
+            $undeliveredItems = OrderDetail::whereIn('order_id', function ($query) use ($tableNumber, $activeOrder) {
+                $query->select('id')
+                    ->from('orders')
+                    ->where('table_number', $tableNumber)
+                    ->where('session_code', $activeOrder->session_code)
+                    ->where('billing_status', 'Ordering');
+            })
+            ->where('status', '!=', 'Delivered')
+            ->count();
+
+            if ($undeliveredItems > 0) {
+                throw new \Exception('Not all items have been delivered yet. Please wait for your order to be completed.');
+            }
+
+            Order::where('table_number', $tableNumber)
+                ->where('session_code', $activeOrder->session_code)
+                ->where('billing_status', 'Ordering')
+                ->update([
+                    'billing_status' => 'Requested'
+                ]);
+
+            return redirect()->route('orders.my')
+                ->with('success', 'Your bill request has been sent. Please proceed to the counter.');
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
         }
-
-        $activeOrder = Order::where('table_number', $tableNumber)
-            ->where('billing_status', 'Ordering')
-            ->latest('id')
-            ->first();
-
-        if (!$activeOrder) {
-            return redirect()->back()
-                ->with('error', 'No active ordering session found for this table.');
-        }
-
-        Order::where('table_number', $tableNumber)
-            ->where('session_code', $activeOrder->session_code)
-            ->where('billing_status', 'Ordering')
-            ->update([
-                'billing_status' => 'Requested'
-            ]);
-
-        return redirect()->route('orders.my')
-            ->with('success', 'Your bill request has been sent. Please proceed to the counter.');
     }
 
     public function billing()
@@ -367,31 +467,59 @@ class OrderController extends Controller
 
     public function confirmPayment(Request $request, $table, $session)
     {
-        $request->validate([
-            'payment' => 'required|numeric|min:0',
-        ]);
-
-        DB::beginTransaction();
-
         try {
+            if (!is_numeric($table) || $table < 1) {
+                throw new \Exception('Invalid table number.');
+            }
+
+            if (empty($session) || !is_string($session)) {
+                throw new \Exception('Invalid session code.');
+            }
+
+            $request->validate([
+                'payment' => 'required|numeric',
+            ]);
+
+            $payment = (float) $request->payment;
+
+            if ($payment < 0) {
+                throw new \Exception('Payment amount cannot be negative.');
+            }
+
+            if ($payment === 0) {
+                throw new \Exception('Payment amount must be greater than 0.');
+            }
+
+            DB::beginTransaction();
+
             $orders = Order::where('table_number', $table)
                 ->where('session_code', $session)
-                ->where('billing_status', 'Requested')
                 ->get();
 
             if ($orders->isEmpty()) {
-                throw new \Exception('No requested billing session found.');
+                throw new \Exception('Table or session not found.');
             }
 
-            $total = $orders->sum('total_price');
-            $payment = (float) $request->payment;
-            $change = $payment - $total;
+            $requestedOrders = $orders->where('billing_status', 'Requested');
+
+            if ($requestedOrders->isEmpty()) {
+                $paidOrders = $orders->where('billing_status', 'Paid');
+                if (!$paidOrders->isEmpty()) {
+                    throw new \Exception('This session has already been paid.');
+                }
+                throw new \Exception('This session is not ready for payment.');
+            }
+
+            $total = $requestedOrders->sum('total_price');
 
             if ($payment < $total) {
-                throw new \Exception('Insufficient payment.');
+                $shortfall = number_format($total - $payment, 2);
+                throw new \Exception('Insufficient payment. Amount short: ₱' . $shortfall);
             }
 
-            foreach ($orders as $order) {
+            $change = $payment - $total;
+
+            foreach ($requestedOrders as $order) {
                 $order->update([
                     'payment_amount' => $payment,
                     'change_amount' => $change,
@@ -403,10 +531,15 @@ class OrderController extends Controller
 
             DB::commit();
 
-            return back()->with('success', 'Payment confirmed.');
+            // Clear table session so next customer starts fresh
+            session()->forget('table_number');
+
+            return back()->with('success', 'Payment confirmed. Table ' . $table . ' is ready for the next customer. Change: ₱' . number_format($change, 2));
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return back()->withErrors($e->errors());
         } catch (\Exception $e) {
             DB::rollBack();
-
             return back()->with('error', $e->getMessage());
         }
     }

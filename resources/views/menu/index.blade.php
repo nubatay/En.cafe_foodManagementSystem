@@ -9,10 +9,12 @@
         </p>
     </div>
 
-    <div class="d-flex gap-2">
-        <a href="{{ route('customer.home') }}" class="btn btn-outline-dark">
-            Change Table
-        </a>
+    <div class="d-flex gap-2 align-items-center">
+        @if(session('table_number'))
+            <span class="badge bg-primary p-2" style="font-size: 0.9rem;">
+                Table {{ session('table_number') }}
+            </span>
+        @endif
         <a href="{{ route('orders.my') }}" class="btn btn-outline-primary">
             My Orders
         </a>

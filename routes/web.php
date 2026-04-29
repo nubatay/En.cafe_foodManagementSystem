@@ -9,6 +9,12 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+// Table start URL (sets table in session, no auth required yet)
+Route::get('/table/{id}/start', [OrderController::class, 'startTableSession'])->name('table.start');
+
+// Table reset URL (clears table from session, no auth required)
+Route::get('/table/reset', [OrderController::class, 'resetTableSession'])->name('table.reset');
+
 // Authenticated users
 Route::middleware(['auth'])->group(function () {
 
@@ -28,13 +34,6 @@ Route::middleware(['auth'])->group(function () {
     })->middleware(['auth'])->name('dashboard');
 
     // Customer
-    Route::get('/menu', [FoodController::class, 'menu'])->name('menu.index');
-    Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
-    Route::get('/my-orders', [OrderController::class, 'myOrders'])->name('orders.my');
-
-    Route::get('/table/setup', [OrderController::class, 'showTableSetup'])->name('table.setup');
-    Route::post('/table/setup', [OrderController::class, 'storeTableSetup'])->name('table.setup.store');
-
     Route::get('/menu', [FoodController::class, 'menu'])->name('menu.index');
     Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
     Route::get('/my-orders', [OrderController::class, 'myOrders'])->name('orders.my');
