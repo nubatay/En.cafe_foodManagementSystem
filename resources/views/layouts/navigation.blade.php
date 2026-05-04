@@ -3,8 +3,8 @@
 
         <!-- LEFT SIDE -->
         <div class="d-flex align-items-center gap-4">
-            <a class="text-white text-decoration-none fs-2 fw-bold" href="{{ route('dashboard') }}">
-                En.cafe
+            <a class="text-white text-decoration-none" href="{{ route('dashboard') }}">
+                <x-application-logo class="h-8 w-auto" />
             </a>
 
             @auth

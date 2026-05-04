@@ -1,45 +1,254 @@
 @extends('layouts.customer')
 
 @section('content')
-<div class="hero-card p-5 mb-4 text-center">
-    <h1 class="display-5 fw-bold mb-3">Welcome to En.cafe</h1>
-</div>
+<style>
+    :root {
+        --primary: #DC2626;
+        --accent: #FACC15;
+        --dark: #7F1D1D;
+        --bg-warm: #FFF7ED;
+        --text-dark: #1F2937;
+        --muted: #6B7280;
+        --border-light: rgba(127, 29, 29, 0.12);
+    }
 
-<div class="row justify-content-center">
-    <div class="col-lg-5">
-        <div class="card-clean">
-            <div class="card-body p-4 text-center">
-                @if(session('table_number'))
-                    <div class="mb-4">
-                        <h3 class="fw-bold mb-3">You are ordering for</h3>
-                        <div class="badge bg-primary p-3" style="font-size: 1.5rem;">
-                            Table {{ session('table_number') }}
-                        </div>
-                    </div>
+    body {
+        background-color: var(--bg-warm) !important;
+        color: var(--text-dark);
+        font-family: 'Inter', system-ui, sans-serif;
+    }
 
-                    <div class="mb-3">
-                        <a href="{{ route('menu.index') }}" class="btn btn-primary btn-lg w-100">
-                            Start Ordering
-                        </a>
-                    </div>
+    /* ── Logo Background Watermark ── */
+    .logo-bg {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -52%);
+        width: min(90vw, 520px);
+        height: min(90vw, 520px);
+        object-fit: contain;
+        opacity: 0.07;
+        pointer-events: none;
+        z-index: 0;
+    }
 
-                    <div>
-                        <a href="{{ route('orders.my') }}" class="btn btn-outline-secondary w-100">
-                            View My Orders
-                        </a>
-                    </div>
-                @else
-                    <div class="alert alert-warning rounded-4" role="alert">
-                        <h5 class="fw-bold mb-2">No Table Assigned</h5>
-                        <p class="mb-0">Please ask staff to provide you with a table QR code or table URL.</p>
-                    </div>
+    /* ── All page content sits above the watermark ── */
+    .page-content {
+        position: relative;
+        z-index: 1;
+        padding-top: 3.5rem;
+    }
 
-                    <p class="text-muted mt-4">
-                        Once your table is assigned, you'll be able to start ordering.
-                    </p>
-                @endif
-            </div>
-        </div>
+    /* ── Brand Title ── */
+    .brand-section {
+        text-align: center;
+        margin-bottom: 2.5rem;
+    }
+
+    .brand-name {
+        display: block;
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: var(--dark);
+        letter-spacing: -0.5px;
+        margin-bottom: 3px;
+    }
+
+    .brand-tagline {
+        display: block;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: var(--primary);
+    }
+
+    /* ── Table ── */
+    .table-focus {
+        text-align: center;
+        margin-bottom: 2.5rem;
+    }
+
+    .table-chip {
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.85);
+        border: 1px solid var(--border-light);
+        border-radius: 999px;
+        padding: 5px 18px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 2.5px;
+        text-transform: uppercase;
+        color: var(--dark);
+        margin-bottom: 0.25rem;
+    }
+
+    .table-number-huge {
+        display: block;
+        font-size: 6.5rem;
+        font-weight: 900;
+        color: var(--dark);
+        line-height: 1;
+        letter-spacing: -5px;
+    }
+
+    /* ── Buttons ── */
+    .action-area {
+        max-width: 380px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .btn-custom-xl {
+        padding: 1.1rem 1.5rem;
+        border-radius: 16px;
+        font-weight: 700;
+        font-size: 1rem;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        border: none;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .btn-main {
+        background-color: var(--primary);
+        color: white;
+    }
+
+    .btn-main:hover {
+        background-color: var(--dark);
+        color: white;
+        transform: translateY(-1px);
+    }
+
+    .btn-secondary-outline {
+        background-color: rgba(255, 255, 255, 0.85);
+        color: var(--text-dark);
+        border: 1px solid var(--border-light);
+    }
+
+    .btn-secondary-outline:hover {
+        border-color: var(--dark);
+        color: var(--dark);
+    }
+
+    /* ── Check-in ── */
+    .checkin-notice {
+        text-align: center;
+        max-width: 360px;
+        margin: 0 auto;
+        padding: 2.5rem 2rem;
+        border-radius: 24px;
+        background: rgba(250, 204, 21, 0.07);
+        border: 1.5px dashed var(--accent);
+    }
+
+    .pulse-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: rgba(220, 38, 38, 0.08);
+        margin: 0 auto 1.25rem;
+        animation: pulse-anim 2s infinite;
+    }
+
+    .pulse-wrap i {
+        font-size: 1.5rem;
+        color: var(--primary);
+    }
+
+    @keyframes pulse-anim {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50%       { transform: scale(1.1); opacity: 0.75; }
+    }
+
+    .checkin-title {
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: var(--text-dark);
+        margin-bottom: 0.5rem;
+    }
+
+    .checkin-body {
+        font-size: 0.875rem;
+        color: var(--muted);
+        line-height: 1.6;
+        margin: 0;
+    }
+
+    /* ── Footer ── */
+    .footer-brand {
+        position: fixed;
+        bottom: 1.75rem;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: rgba(127, 29, 29, 0.3);
+        z-index: 1;
+    }
+</style>
+
+{{-- Faded logo watermark filling the background --}}
+<img src="{{ asset('images/logo.png') }}" alt="" class="logo-bg" aria-hidden="true">
+
+<div class="container page-content">
+
+    {{-- Brand name --}}
+    <div class="brand-section">
+        <span class="brand-name">En.cafe</span>
+        
     </div>
+
+    @if(session('table_number'))
+
+        {{-- Table View --}}
+        <div class="table-focus">
+            <span class="table-chip">Now serving table</span>
+            <span class="table-number-huge">{{ session('table_number') }}</span>
+        </div>
+
+        <div class="action-area">
+            <a href="{{ route('menu.index') }}" class="btn-custom-xl btn-main">
+                <i class="bi bi-cup-hot-fill"></i>
+                Browse Menu
+            </a>
+            <a href="{{ route('orders.my') }}" class="btn-custom-xl btn-secondary-outline">
+                <i class="bi bi-receipt"></i>
+                My Orders
+            </a>
+        </div>
+
+    @else
+
+        {{-- Check-in View --}}
+        <div class="checkin-notice">
+            <div class="pulse-wrap">
+                <i class="bi bi-geo-alt-fill"></i>
+            </div>
+            <p class="checkin-title">Check-in required</p>
+            <p class="checkin-body">
+                Please let our staff know you're here. They will set your table to enable the menu.
+            </p>
+        </div>
+
+    @endif
+
+    <div class="footer-brand">
+        Powered by En.cafe &bull; Premium POS
+    </div>
+
 </div>
 @endsection

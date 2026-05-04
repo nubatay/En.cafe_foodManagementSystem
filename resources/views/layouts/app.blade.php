@@ -10,8 +10,8 @@
 
     <style>
         body {
-            background: #f5f7fb;
-            color: #1f2937;
+            background: #f8fafc;
+            color: #0f172a;
         }
 
         .app-shell {

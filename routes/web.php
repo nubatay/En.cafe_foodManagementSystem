@@ -60,7 +60,7 @@ Route::middleware(['auth'])->group(function () {
 
         Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
 
-        Route::get('/admin/billing', [OrderController::class, 'billing'])->name('admin.billing');
+        Route::get('/admin/billing', [OrderController::class, 'billing'])->name('admin.billing.index');
         Route::get('/admin/billing/{table}/{session}', [OrderController::class, 'billingShow'])->name('admin.billing.show');
         Route::post('/admin/billing/{table}/{session}/pay', [OrderController::class, 'confirmPayment'])->name('admin.billing.pay');
 

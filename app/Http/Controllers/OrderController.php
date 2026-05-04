@@ -456,7 +456,7 @@ class OrderController extends Controller
             ->get();
 
         if ($orders->isEmpty()) {
-            return redirect()->route('admin.billing')
+            return redirect()->route('admin.billing.index')
                 ->with('error', 'Session not found.');
         }
 
