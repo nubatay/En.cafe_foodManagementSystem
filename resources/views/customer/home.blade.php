@@ -32,17 +32,16 @@
         z-index: 0;
     }
 
-    /* ── All page content sits above the watermark ── */
     .page-content {
         position: relative;
         z-index: 1;
         padding-top: 3.5rem;
     }
 
-    /* ── Brand Title ── */
+    /* ── Brand ── */
     .brand-section {
         text-align: center;
-        margin-bottom: 2.5rem;
+        margin-bottom: 2rem;
     }
 
     .brand-name {
@@ -51,22 +50,12 @@
         font-weight: 800;
         color: var(--dark);
         letter-spacing: -0.5px;
-        margin-bottom: 3px;
-    }
-
-    .brand-tagline {
-        display: block;
-        font-size: 0.7rem;
-        font-weight: 700;
-        letter-spacing: 3px;
-        text-transform: uppercase;
-        color: var(--primary);
     }
 
     /* ── Table ── */
     .table-focus {
         text-align: center;
-        margin-bottom: 2.5rem;
+        margin-bottom: 1.5rem;
     }
 
     .table-chip {
@@ -90,6 +79,31 @@
         color: var(--dark);
         line-height: 1;
         letter-spacing: -5px;
+    }
+
+    /* ── Welcome Card ── */
+    .welcome-card {
+        max-width: 420px;
+        margin: 1.5rem auto 2rem;
+        padding: 2rem 1.5rem;
+        text-align: center;
+        background: rgba(255,255,255,0.9);
+        border: 1px solid var(--border-light);
+        border-radius: 20px;
+    }
+
+    .welcome-title {
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: var(--dark);
+        margin-bottom: 0.75rem;
+        letter-spacing: 1px;
+    }
+
+    .welcome-text {
+        font-size: 0.9rem;
+        color: var(--muted);
+        line-height: 1.6;
     }
 
     /* ── Buttons ── */
@@ -168,21 +182,18 @@
 
     @keyframes pulse-anim {
         0%, 100% { transform: scale(1); opacity: 1; }
-        50%       { transform: scale(1.1); opacity: 0.75; }
+        50% { transform: scale(1.1); opacity: 0.75; }
     }
 
     .checkin-title {
         font-size: 1.05rem;
         font-weight: 800;
-        color: var(--text-dark);
         margin-bottom: 0.5rem;
     }
 
     .checkin-body {
         font-size: 0.875rem;
         color: var(--muted);
-        line-height: 1.6;
-        margin: 0;
     }
 
     /* ── Footer ── */
@@ -201,54 +212,49 @@
     }
 </style>
 
-{{-- Faded logo watermark filling the background --}}
-<img src="{{ asset('images/logo.png') }}" alt="" class="logo-bg" aria-hidden="true">
+<img src="{{ asset('images/logo.png') }}" class="logo-bg" alt="">
 
 <div class="container page-content">
 
-    {{-- Brand name --}}
     <div class="brand-section">
         <span class="brand-name">En.cafe</span>
-        
     </div>
 
     @if(session('table_number'))
 
-        {{-- Table View --}}
+        {{-- Table Number --}}
         <div class="table-focus">
-            <span class="table-chip">Now serving table</span>
+            <span class="table-chip">Now Serving Table</span>
             <span class="table-number-huge">{{ session('table_number') }}</span>
         </div>
 
+       
+
+        {{-- Buttons --}}
         <div class="action-area">
             <a href="{{ route('menu.index') }}" class="btn-custom-xl btn-main">
                 <i class="bi bi-cup-hot-fill"></i>
                 Browse Menu
             </a>
-            <a href="{{ route('orders.my') }}" class="btn-custom-xl btn-secondary-outline">
-                <i class="bi bi-receipt"></i>
-                My Orders
-            </a>
+
         </div>
 
     @else
 
-        {{-- Check-in View --}}
+        {{-- Check-in --}}
         <div class="checkin-notice">
             <div class="pulse-wrap">
                 <i class="bi bi-geo-alt-fill"></i>
             </div>
             <p class="checkin-title">Check-in required</p>
             <p class="checkin-body">
-                Please let our staff know you're here. They will set your table to enable the menu.
+                Please let staff know you're here to activate your table.
             </p>
         </div>
 
     @endif
 
-    <div class="footer-brand">
-        Powered by En.cafe &bull; Premium POS
-    </div>
+  
 
 </div>
 @endsection
