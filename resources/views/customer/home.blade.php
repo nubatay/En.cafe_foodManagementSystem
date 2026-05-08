@@ -212,24 +212,13 @@
     }
 </style>
 
-<img src="{{ asset('images/logo.png') }}" class="logo-bg" alt="">
-
 <div class="container page-content">
 
     <div class="brand-section">
-        <span class="brand-name">En.cafe</span>
+        <img src="{{ asset('images/logo.png') }}" alt="En.cafe Logo">
     </div>
 
     @if(session('table_number'))
-
-        {{-- Table Number --}}
-        <div class="table-focus">
-            <span class="table-chip">Now Serving Table</span>
-            <span class="table-number-huge">{{ session('table_number') }}</span>
-        </div>
-
-       
-
         {{-- Buttons --}}
         <div class="action-area">
             <a href="{{ route('menu.index') }}" class="btn-custom-xl btn-main">
@@ -237,19 +226,6 @@
                 Browse Menu
             </a>
 
-        </div>
-
-    @else
-
-        {{-- Check-in --}}
-        <div class="checkin-notice">
-            <div class="pulse-wrap">
-                <i class="bi bi-geo-alt-fill"></i>
-            </div>
-            <p class="checkin-title">Check-in required</p>
-            <p class="checkin-body">
-                Please let staff know you're here to activate your table.
-            </p>
         </div>
 
     @endif

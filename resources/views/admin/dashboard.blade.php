@@ -61,7 +61,7 @@
 
 <div class="container-fluid py-4">
     <div class="mb-5">
-        <h1 class="h3 fw-bold mb-1" style="color: var(--secondary);">En.cafe Admin Dashboard</h1>
+        <h1 class="h3 fw-bold mb-1" style="color: var(--secondary);">Admin Dashboard</h1>
         <p class="soft-text">Operational overview for foods, orders, and real-time billing.</p>
     </div>
 

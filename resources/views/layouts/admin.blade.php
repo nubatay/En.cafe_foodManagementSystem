@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>En.cafe Admin</title>
 
+    <link rel="icon" type="image/png" href="{{ asset('images/logos.png') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     
@@ -14,8 +15,8 @@
 
         :root {
             --sidebar-bg: #0F172A;
-            --item-active: #2563EB; /* En.cafe Green */
-            --item-hover: #1E293B;
+            --item-active: #2563EB; 
+            --item-hover: #1E2937;
             --text-muted: #94A3B8;
         }
 
@@ -28,25 +29,28 @@
             width: 280px;
             background: var(--sidebar-bg);
             min-height: 100vh;
-            padding: 2rem 1rem;
+            padding: 1.5rem 1rem; /* Reduced top padding from 2rem to 1.5rem */
             position: fixed;
-        }
-
-        /* Fixed Brand Consistency */
-        .sidebar-brand {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: white !important;
-            text-decoration: none;
             display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 2.5rem;
-            padding-left: 0.5rem;
+            flex-direction: column;
         }
 
-        /* Sidebar Link Styling - Prevents "Blue Stick" */
+        /* Fixed Brand Consistency - Logo Spacing */
+        .sidebar-brand {
+            display: block;
+            margin-bottom: 1.5rem; /* Reduced bottom margin for tighter fit */
+            padding-left: 0.5rem;
+            text-decoration: none;
+        }
+
+        /* Logo sizing - No more stretching */
+        .sidebar-logo {
+            max-width: 140px; /* Adjust this to make the logo larger or smaller */
+            height: auto;
+            display: block;
+        }
+
+        /* Sidebar Link Styling */
         .nav-link {
             color: var(--text-muted) !important;
             font-weight: 500;
@@ -59,7 +63,7 @@
             transition: all 0.2s ease;
             border: none !important;
             outline: none !important;
-            box-shadow: none !important; /* Removes Bootstrap blue shadow */
+            box-shadow: none !important;
         }
 
         .nav-link:hover {
@@ -67,14 +71,12 @@
             color: white !important;
         }
 
-        /* Active State - Matches your video toggle color */
         .nav-link.active {
             background: var(--item-active) !important;
             color: white !important;
             font-weight: 600;
         }
 
-        /* Fix for the blue "outline" when clicking */
         .nav-link:focus {
             background: inherit; 
             color: inherit;
@@ -92,15 +94,15 @@
 <div class="d-flex">
     <aside class="sidebar">
         <a href="{{ route('admin.dashboard') }}" class="sidebar-brand">
-            En.cafe
+            <img src="{{ asset('images/logo.png') }}" alt="En.cafe Logo" class="sidebar-logo">
         </a>
 
         <div class="mb-4 px-2">
-            <small class="text-uppercase fw-bold text-muted" style="font-size: 0.7rem;">System Admin</small>
-            <div class="text-white fw-bold">{{ auth()->user()->name }}</div>
+            <small class="text-uppercase fw-bold text-muted" style="font-size: 0.7rem; letter-spacing: 0.5px;">System Admin</small>
+            <div class="text-white fw-bold fs-5">{{ auth()->user()->name }}</div>
         </div>
 
-        <nav class="nav flex-column">
+        <nav class="nav flex-column mb-auto">
             <a href="{{ route('admin.dashboard') }}" 
                class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                 <i class="bi bi-grid-fill"></i> Dashboard
@@ -127,10 +129,10 @@
             </a>
         </nav>
 
-        <form method="POST" action="{{ route('logout') }}" class="mt-auto">
+        <form method="POST" action="{{ route('logout') }}" class="mt-auto border-top border-secondary pt-3">
             @csrf
-            <button class="btn btn-outline-danger w-100 border-0 rounded-3 text-start px-3">
-                <i class="bi bi-box-arrow-left me-2"></i> Logout
+            <button class="nav-link w-100 bg-transparent text-danger border-0">
+                <i class="bi bi-box-arrow-left"></i> Logout
             </button>
         </form>
     </aside>
