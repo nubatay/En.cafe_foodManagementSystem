@@ -22,7 +22,6 @@ class FoodController extends Controller
         return view('menu.index', compact('foods'));
     }
 
-    
     public function index()
     {
         $foods = FoodItem::orderBy('category')
@@ -32,24 +31,23 @@ class FoodController extends Controller
         return view('foods.index', compact('foods'));
     }
 
- 
     public function create()
     {
-        return view('foods.create');
+        $images = $this->getPublicImages();
+        return view('foods.create', compact('images'));
     }
-
 
     public function store(Request $request)
     {
         try {
             $validated = $request->validate([
-                'name' => 'required|string|max:255',
+                'name'     => 'required|string|max:255',
                 'description' => 'nullable|string',
-                'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-                'price' => 'required|numeric|min:0.01',
-                'stock' => 'required|integer|min:0',
+                'image'    => 'nullable|string|max:255',
+                'price'    => 'required|numeric|min:0.01',
+                'stock'    => 'required|integer|min:0',
                 'category' => 'required|string|max:255',
-                'options' => 'nullable|string',
+                'options'  => 'nullable|string',
             ]);
 
             if (empty(trim($validated['name']))) {
@@ -88,7 +86,7 @@ class FoodController extends Controller
                     }
 
                     $parsedOptions[] = [
-                        'name' => $parts[0],
+                        'name'  => $parts[0],
                         'price' => (float) $parts[1],
                     ];
                 }
@@ -96,19 +94,8 @@ class FoodController extends Controller
                 $validated['options'] = !empty($parsedOptions) ? $parsedOptions : null;
             }
 
-            if ($request->hasFile('image')) {
-                $file = $request->file('image');
-                if (!$file->isValid()) {
-                    throw new \Exception('Image upload failed. Please try again.');
-                }
-                if (!in_array($file->getMimeType(), ['image/jpeg', 'image/png', 'image/webp'])) {
-                    throw new \Exception('Image must be JPG, PNG, or WebP format.');
-                }
-                if ($file->getSize() > 2048 * 1024) {
-                    throw new \Exception('Image size cannot exceed 2MB.');
-                }
-                $validated['image'] = $file->store('foods', 'public');
-            }
+            // Use the selected image filename directly from public/images
+            $validated['image'] = $request->input('image') ?: null;
 
             FoodItem::create([
                 ...$validated,
@@ -124,12 +111,11 @@ class FoodController extends Controller
         }
     }
 
-
     public function edit(FoodItem $food)
     {
-        return view('foods.edit', compact('food'));
+        $images = $this->getPublicImages();
+        return view('foods.edit', compact('food', 'images'));
     }
-
 
     public function update(Request $request, FoodItem $food)
     {
@@ -139,13 +125,13 @@ class FoodController extends Controller
             }
 
             $validated = $request->validate([
-                'name' => 'required|string|max:255',
+                'name'     => 'required|string|max:255',
                 'description' => 'nullable|string',
-                'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-                'price' => 'required|numeric|min:0.01',
-                'stock' => 'required|integer|min:0',
+                'image'    => 'nullable|string|max:255',
+                'price'    => 'required|numeric|min:0.01',
+                'stock'    => 'required|integer|min:0',
                 'category' => 'required|string|max:255',
-                'options' => 'nullable|string',
+                'options'  => 'nullable|string',
             ]);
 
             if (empty(trim($validated['name']))) {
@@ -184,7 +170,7 @@ class FoodController extends Controller
                     }
 
                     $parsedOptions[] = [
-                        'name' => $parts[0],
+                        'name'  => $parts[0],
                         'price' => (float) $parts[1],
                     ];
                 }
@@ -192,18 +178,11 @@ class FoodController extends Controller
                 $validated['options'] = !empty($parsedOptions) ? $parsedOptions : null;
             }
 
-            if ($request->hasFile('image')) {
-                $file = $request->file('image');
-                if (!$file->isValid()) {
-                    throw new \Exception('Image upload failed. Please try again.');
-                }
-                if (!in_array($file->getMimeType(), ['image/jpeg', 'image/png', 'image/webp'])) {
-                    throw new \Exception('Image must be JPG, PNG, or WebP format.');
-                }
-                if ($file->getSize() > 2048 * 1024) {
-                    throw new \Exception('Image size cannot exceed 2MB.');
-                }
-                $validated['image'] = $file->store('foods', 'public');
+            // Keep existing image if none selected; otherwise use the new selection
+            if ($request->filled('image')) {
+                $validated['image'] = $request->input('image');
+            } else {
+                unset($validated['image']); // keep whatever is already stored
             }
 
             $food->update($validated);
@@ -217,7 +196,6 @@ class FoodController extends Controller
         }
     }
 
-  
     public function destroy(FoodItem $food)
     {
         $food->update([
@@ -230,5 +208,29 @@ class FoodController extends Controller
 
         return redirect()->route('foods.index')
             ->with('success', $message);
+    }
+
+    /**
+     * Scan public/images and return a list of image filenames.
+     */
+    private function getPublicImages(): array
+    {
+        $dir = public_path('images');
+
+        if (!is_dir($dir)) {
+            return [];
+        }
+
+        // Filenames to exclude from the food image picker (logos, icons, etc.)
+        $excluded = ['logo.png', 'logos.png'];
+
+        $files = array_filter(scandir($dir), function ($file) use ($dir, $excluded) {
+            if (in_array($file, ['.', '..'])) return false;
+            if (in_array($file, $excluded)) return false;
+            $mime = mime_content_type($dir . DIRECTORY_SEPARATOR . $file);
+            return str_starts_with($mime, 'image/');
+        });
+
+        return array_values($files);
     }
 }

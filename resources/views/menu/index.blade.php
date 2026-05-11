@@ -92,7 +92,6 @@
         </div>
 
         <div class="d-flex gap-2 align-items-center">
-           
             <a href="{{ route('orders.my') }}" class="btn btn-outline-dark rounded-pill fw-bold px-4">
                 My Orders
             </a>
@@ -115,8 +114,10 @@
                         <div class="col-md-6 mb-4 food-card" data-category="{{ strtolower($food->category) }}">
                             <div class="card-clean h-100 overflow-hidden">
                                 <div class="position-relative">
-                                    <img src="{{ $food->image ? asset('storage/' . $food->image) : 'https://via.placeholder.com/600x350?text=En.cafe' }}"
-                                         alt="{{ $food->name }}" style="height:200px; width:100%; object-fit:cover;">
+                                    <img src="{{ $food->image ? asset('images/' . $food->image) : asset('images/logo.png') }}"
+                                         alt="{{ $food->name }}"
+                                         style="height:200px; width:100%; object-fit:cover;"
+                                         onerror="this.src='{{ asset('images/logo.png') }}'">
                                     <div class="position-absolute bottom-0 start-0 m-3">
                                         <span class="badge bg-white text-dark shadow-sm fw-bold">₱{{ number_format($food->price, 2) }}</span>
                                     </div>
@@ -140,9 +141,9 @@
                                                         $optName = is_array($opt) ? ($opt['name'] ?? '') : trim($opt);
                                                         $optPrice = is_array($opt) ? ($opt['price'] ?? 0) : 0;
                                                     @endphp
-                                                    <input type="radio" class="btn-check item-option" 
-                                                           name="items[{{ $index }}][option]" 
-                                                           id="opt_{{ $food->id }}_{{ $optIndex }}" 
+                                                    <input type="radio" class="btn-check item-option"
+                                                           name="items[{{ $index }}][option]"
+                                                           id="opt_{{ $food->id }}_{{ $optIndex }}"
                                                            value="{{ $optName }}" data-extra="{{ $optPrice }}" {{ $optIndex === 0 ? 'checked' : '' }}>
                                                     <label class="btn btn-outline-dark btn-sm rounded-pill" for="opt_{{ $food->id }}_{{ $optIndex }}">
                                                         {{ $optName }} @if($optPrice > 0) +₱{{ $optPrice }} @endif
@@ -156,8 +157,8 @@
                                         <small class="text-muted">Stock: {{ $food->stock }}</small>
                                         <div class="qty-stepper">
                                             <button type="button" class="stepper-btn minus">-</button>
-                                            <input type="number" name="items[{{ $index }}][qty]" 
-                                                   class="item-qty" value="0" min="0" max="{{ $food->stock }}" 
+                                            <input type="number" name="items[{{ $index }}][qty]"
+                                                   class="item-qty" value="0" min="0" max="{{ $food->stock }}"
                                                    data-price="{{ $food->price }}" data-name="{{ $food->name }}">
                                             <button type="button" class="stepper-btn plus">+</button>
                                         </div>
@@ -210,8 +211,7 @@ document.addEventListener('DOMContentLoaded', function () {
         qtyInputs.forEach(function (input) {
             const qty = parseInt(input.value) || 0;
             const card = input.closest('.food-card');
-            
-            // Add visual feedback class
+
             if(qty > 0) card.classList.add('has-qty');
             else card.classList.remove('has-qty');
 
@@ -220,7 +220,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const name = input.dataset.name || '';
                 const selectedOption = card.querySelector('.item-option:checked');
                 const extraPrice = selectedOption ? parseFloat(selectedOption.dataset.extra) || 0 : 0;
-                
+
                 const finalPrice = basePrice + extraPrice;
                 const subtotal = qty * finalPrice;
                 total += subtotal;

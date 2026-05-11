@@ -104,6 +104,107 @@
         border-radius: 0 8px 8px 0;
         font-size: 0.85rem;
     }
+
+    /* Image Picker */
+    .image-picker-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        max-height: 280px;
+        overflow-y: auto;
+        padding: 4px;
+    }
+
+    .image-picker-grid::-webkit-scrollbar { width: 5px; }
+    .image-picker-grid::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
+    .image-picker-grid::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+
+    .img-pick-item input[type="radio"] { display: none; }
+
+    .img-pick-item label {
+        display: block;
+        border: 2.5px solid #E2E8F0;
+        border-radius: 10px;
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 0.2s;
+        aspect-ratio: 1;
+        position: relative;
+    }
+
+    .img-pick-item label img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .img-pick-item input[type="radio"]:checked + label {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
+    }
+
+    .img-pick-item input[type="radio"]:checked + label::after {
+        content: '✓';
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: var(--primary);
+        color: white;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        font-weight: 700;
+    }
+
+    .img-pick-none label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        background: #F8FAFC;
+        color: #94A3B8;
+        font-size: 0.75rem;
+        font-weight: 500;
+        gap: 4px;
+        border: 2px dashed #CBD5E1;
+        border-radius: 10px;
+        cursor: pointer;
+        aspect-ratio: 1;
+        transition: all 0.2s;
+    }
+
+    .img-pick-none input[type="radio"]:checked + label {
+        border-color: #94A3B8;
+        background: #F1F5F9;
+        color: #475569;
+    }
+
+    .selected-preview {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        background: #EFF6FF;
+        border-radius: 10px;
+        margin-top: 10px;
+        font-size: 0.82rem;
+        color: var(--secondary);
+        font-weight: 500;
+        min-height: 48px;
+    }
+
+    .selected-preview img {
+        width: 36px;
+        height: 36px;
+        border-radius: 6px;
+        object-fit: cover;
+        border: 1.5px solid #BFDBFE;
+    }
 </style>
 
 <div class="container-fluid py-4">
@@ -124,13 +225,25 @@
                 </a>
             </div>
 
-            <form action="{{ route('foods.store') }}" method="POST" enctype="multipart/form-data">
+            {{-- Validation errors --}}
+            @if ($errors->any())
+                <div class="alert alert-danger rounded-3 mb-4">
+                    <ul class="mb-0">@foreach ($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
+                </div>
+            @endif
+
+            @if (session('error'))
+                <div class="alert alert-danger rounded-3 mb-4">{{ session('error') }}</div>
+            @endif
+
+            {{-- No enctype needed — no file upload anymore --}}
+            <form action="{{ route('foods.store') }}" method="POST">
                 @csrf
                 <div class="row g-4">
                     <div class="col-md-7">
                         <div class="form-card p-4 h-100">
                             <h5 class="mb-4 fw-bold">Basic Information</h5>
-                            
+
                             <div class="mb-4">
                                 <label class="form-label">Food Name</label>
                                 <input type="text" name="name" class="form-control" placeholder="e.g. Spanish Latte" value="{{ old('name') }}" required>
@@ -155,7 +268,7 @@
                     <div class="col-md-5">
                         <div class="form-card p-4 mb-4">
                             <h5 class="mb-4 fw-bold">Pricing & Stock</h5>
-                            
+
                             <div class="mb-4">
                                 <label class="form-label">Base Price</label>
                                 <div class="input-group">
@@ -164,16 +277,55 @@
                                 </div>
                             </div>
 
-                            <div class="mb-4">
+                            <div class="mb-0">
                                 <label class="form-label">Initial Stock Level</label>
                                 <input type="number" min="0" name="stock" class="form-control" placeholder="Quantity in kitchen" value="{{ old('stock') }}" required>
                             </div>
+                        </div>
 
-                            <div class="mb-0">
-                                <label class="form-label">Food Image</label>
-                                <input type="file" name="image" class="form-control" accept="image/*">
-                                <small class="text-muted d-block mt-1">High-quality JPG/PNG (Recommended 800x800px)</small>
-                            </div>
+                        {{-- IMAGE PICKER --}}
+                        <div class="form-card p-4 mb-4">
+                            <h5 class="mb-3 fw-bold">Food Image</h5>
+
+                            @if(count($images) > 0)
+                                <div class="image-picker-grid" id="imagePicker">
+                                    {{-- "None" option --}}
+                                    <div class="img-pick-item img-pick-none">
+                                        <input type="radio" name="image" id="img_none" value=""
+                                            {{ old('image', '') === '' ? 'checked' : '' }}>
+                                        <label for="img_none">
+                                            <span style="font-size:1.4rem;">🚫</span>
+                                            <span>No Image</span>
+                                        </label>
+                                    </div>
+
+                                    @foreach($images as $img)
+                                        <div class="img-pick-item">
+                                            <input type="radio" name="image" id="img_{{ $loop->index }}"
+                                                value="{{ $img }}"
+                                                {{ old('image') === $img ? 'checked' : '' }}
+                                                onchange="updatePreview('{{ $img }}')">
+                                            <label for="img_{{ $loop->index }}" title="{{ $img }}">
+                                                <img src="{{ asset('images/' . $img) }}" alt="{{ $img }}">
+                                            </label>
+                                        </div>
+                                    @endforeach
+                                </div>
+
+                                {{-- Selected preview --}}
+                                <div class="selected-preview" id="selectedPreview">
+                                    @if(old('image'))
+                                        <img src="{{ asset('images/' . old('image')) }}" id="previewImg">
+                                        <span id="previewName">{{ old('image') }}</span>
+                                    @else
+                                        <span class="text-muted" id="previewName">No image selected</span>
+                                    @endif
+                                </div>
+                            @else
+                                <div class="alert alert-warning rounded-3 mb-0 py-2 small">
+                                    No images found in <code>public/images</code>. Add image files there to use the picker.
+                                </div>
+                            @endif
                         </div>
 
                         <div class="form-card p-4">
@@ -201,4 +353,30 @@
         </div>
     </div>
 </div>
+
+<script>
+function updatePreview(filename) {
+    const preview = document.getElementById('selectedPreview');
+    const name    = document.getElementById('previewName');
+
+    // Remove old img if exists
+    const oldImg = document.getElementById('previewImg');
+    if (oldImg) oldImg.remove();
+
+    if (filename) {
+        const img  = document.createElement('img');
+        img.src    = '{{ asset("images/") }}/' + filename;
+        img.id     = 'previewImg';
+        preview.prepend(img);
+        name.textContent = filename;
+    } else {
+        name.textContent = 'No image selected';
+    }
+}
+
+// Wire up the "No Image" radio too
+document.getElementById('img_none').addEventListener('change', function() {
+    updatePreview('');
+});
+</script>
 @endsection
