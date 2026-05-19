@@ -6,7 +6,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
 
 <style>
-    /* ── Design Tokens (matches landing page) ── */
+    /* ── Design Tokens ── */
     :root {
         --crimson:      #B01010;
         --crimson-dark: #8a0c0c;
@@ -20,7 +20,7 @@
     }
 
     /* ── Reset & Base ── */
-    *, *::before, *::after { box-sizing: border-box; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
         font-family: 'Jost', sans-serif !important;
@@ -29,7 +29,7 @@
         min-height: 100vh;
     }
 
-    /* ── Animations ── */
+    /* ── Keyframes ── */
     @keyframes steam {
         0%   { transform: translateY(0) scaleX(1); opacity: 0.95; }
         50%  { transform: translateY(-16px) scaleX(1.2); opacity: 0.45; }
@@ -49,10 +49,15 @@
     }
     @keyframes shimmerGold {
         0%, 100% { opacity: 1; }
-        50%       { opacity: 0.55; }
+        50%       { opacity: 0.4; }
+    }
+    @keyframes tickIn {
+        0%   { transform: scale(0) rotate(-15deg); opacity: 0; }
+        70%  { transform: scale(1.15) rotate(4deg); opacity: 1; }
+        100% { transform: scale(1) rotate(0deg); opacity: 1; }
     }
 
-    /* ── Background grid texture (same as landing) ── */
+    /* ── Background Grid ── */
     .page-bg {
         position: fixed;
         inset: 0;
@@ -64,7 +69,7 @@
         z-index: 0;
     }
 
-    /* Warm radial blob (bottom-right) */
+    /* ── Warm Blob ── */
     .page-blob {
         position: fixed;
         bottom: -120px;
@@ -89,15 +94,14 @@
         flex-direction: column;
         align-items: center;
         justify-content: flex-start;
-        padding-top: 3rem;
+        padding: 3rem 1.25rem 5rem;
     }
 
-    /* ── Logo image (top) ── */
+    /* ── Logo ── */
     .logo-img-wrap {
         margin-bottom: 2rem;
         animation: fadeIn 0.7s ease both;
     }
-
     .logo-img-wrap img {
         height: 56px;
         width: auto;
@@ -112,7 +116,6 @@
         margin-bottom: 2rem;
         animation: fadeUp 0.7s ease 0.1s both;
     }
-
     .table-chip {
         display: inline-flex;
         align-items: center;
@@ -128,7 +131,6 @@
         color: var(--ink-mid);
         margin-bottom: 0.6rem;
     }
-
     .table-chip-dot {
         width: 6px;
         height: 6px;
@@ -137,7 +139,6 @@
         animation: shimmerGold 2s ease-in-out infinite;
         flex-shrink: 0;
     }
-
     .table-number {
         font-family: 'Cormorant Garamond', Georgia, serif;
         font-size: clamp(5.5rem, 18vw, 8rem);
@@ -147,7 +148,6 @@
         letter-spacing: -0.04em;
         display: block;
     }
-
     .table-label {
         font-size: 0.72rem;
         font-weight: 600;
@@ -171,7 +171,6 @@
         box-shadow: 0 2px 20px rgba(26,16,8,0.05);
         animation: fadeUp 0.7s ease 0.15s both;
     }
-
     .welcome-eyebrow {
         display: inline-flex;
         align-items: center;
@@ -191,7 +190,6 @@
         background: var(--gold);
         flex-shrink: 0;
     }
-
     .welcome-title {
         font-family: 'Cormorant Garamond', Georgia, serif;
         font-size: 1.75rem;
@@ -200,12 +198,10 @@
         margin-bottom: 0.5rem;
         line-height: 1.15;
     }
-
     .welcome-title em {
         font-style: italic;
         color: var(--crimson);
     }
-
     .welcome-text {
         font-size: 0.85rem;
         font-weight: 300;
@@ -221,8 +217,8 @@
         flex-direction: column;
         gap: 10px;
         animation: fadeUp 0.7s ease 0.22s both;
+        margin-bottom: 2rem;
     }
-
     .btn-encafe {
         display: flex;
         align-items: center;
@@ -240,7 +236,6 @@
         cursor: pointer;
         transition: all 0.18s ease;
     }
-
     .btn-primary-ec {
         background: var(--crimson);
         color: var(--white);
@@ -254,7 +249,6 @@
         color: var(--white);
         text-decoration: none;
     }
-
     .btn-outline-ec {
         background: var(--white);
         color: var(--ink);
@@ -267,20 +261,126 @@
         text-decoration: none;
     }
 
-    /* ── Animated logo (bottom watermark) ── */
+    /* ── Staff Instruction Card ── */
+    .staff-card {
+        width: 100%;
+        max-width: 400px;
+        background: var(--white);
+        border: 1.5px dashed rgba(201,146,26,0.3);
+        border-radius: 16px;
+        padding: 1.75rem;
+        text-align: center;
+        margin-bottom: 1.5rem;
+        animation: fadeUp 0.7s ease 0.1s both;
+    }
+    .staff-eyebrow {
+        font-size: 0.62rem;
+        font-weight: 600;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--ink-mid);
+        opacity: 0.4;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    .staff-eyebrow::before,
+    .staff-eyebrow::after {
+        content: '';
+        width: 20px;
+        height: 1px;
+        background: currentColor;
+        flex-shrink: 0;
+    }
+    .staff-icon-wrap {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: rgba(201,146,26,0.08);
+        border: 1px solid rgba(201,146,26,0.18);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+    }
+    .staff-icon-wrap i {
+        font-size: 1.2rem;
+        color: var(--gold);
+    }
+    .staff-title {
+        font-family: 'Cormorant Garamond', Georgia, serif;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--ink);
+        margin-bottom: 1.1rem;
+        line-height: 1.2;
+    }
+    .cmd-row {
+        background: rgba(26,16,8,0.03);
+        border: 1px solid var(--ink-faint);
+        border-radius: 8px;
+        padding: 0.6rem 0.9rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        text-align: left;
+    }
+    .cmd-row:last-of-type { margin-bottom: 1rem; }
+    .cmd-mono {
+        font-family: 'Courier New', monospace;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--crimson);
+        letter-spacing: 0.03em;
+    }
+    .cmd-mono .cmd-var { color: var(--gold); }
+    .cmd-sub {
+        font-size: 0.66rem;
+        color: var(--ink-mid);
+        opacity: 0.55;
+        margin-top: 2px;
+        line-height: 1.4;
+    }
+    .cmd-badge {
+        flex-shrink: 0;
+        padding: 2px 9px;
+        border-radius: 999px;
+        font-size: 0.58rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+    }
+    .badge-assign { background: rgba(176,16,16,0.08); color: var(--crimson); }
+    .badge-reset  { background: rgba(201,146,26,0.12); color: var(--gold); }
+    .staff-footnote {
+        font-size: 0.63rem;
+        color: var(--ink-mid);
+        opacity: 0.4;
+        line-height: 1.7;
+        letter-spacing: 0.03em;
+    }
+    .staff-footnote code {
+        font-family: 'Courier New', monospace;
+        font-size: 0.63rem;
+        opacity: 0.85;
+    }
+
+    /* ── Animated Logo Watermark ── */
     .logo-animated-wrap {
         margin-top: 0.25rem;
         text-align: center;
         animation: fadeIn 1s ease 0.4s both;
     }
-
     .logo-wordmark {
         display: inline-flex;
         align-items: flex-end;
         line-height: 1;
         gap: 0;
     }
-
     .logo-letter {
         font-family: 'Cormorant Garamond', Georgia, serif;
         font-size: 2.6rem;
@@ -290,17 +390,12 @@
         user-select: none;
         transition: color 0.3s;
     }
-
-    .logo-animated-wrap:hover .logo-letter {
-        color: var(--crimson);
-    }
-
+    .logo-animated-wrap:hover .logo-letter { color: var(--crimson); }
     .dot-wrap {
         position: relative;
         display: inline-flex;
         align-items: flex-end;
     }
-
     .steam-group {
         position: absolute;
         bottom: calc(100% - 8px);
@@ -311,7 +406,6 @@
         align-items: flex-end;
         pointer-events: none;
     }
-
     .wisp {
         border-radius: 2px 2px 4px 4px;
         background: linear-gradient(to top,
@@ -323,78 +417,10 @@
         opacity: 0;
         transition: opacity 0.3s;
     }
-
     .logo-animated-wrap:hover .wisp { opacity: 1; }
-
     .wisp:nth-child(1) { width: 3px; height: 18px; animation: steam 2.2s ease-in-out 0s infinite; }
     .wisp:nth-child(2) { width: 4px; height: 25px; animation: steam 2.2s ease-in-out 0.38s infinite; }
     .wisp:nth-child(3) { width: 3px; height: 15px; animation: steam 2.2s ease-in-out 0.76s infinite; }
-
-    /* ── Check-in Notice ── */
-    .checkin-card {
-        width: 100%;
-        max-width: 400px;
-        background: var(--white);
-        border: 1.5px dashed var(--ink-faint);
-        border-radius: 16px;
-        padding: 2rem 1.75rem;
-        text-align: center;
-        animation: fadeUp 0.7s ease 0.1s both;
-    }
-
-    .checkin-icon-wrap {
-        width: 52px;
-        height: 52px;
-        border-radius: 50%;
-        background: rgba(176,16,16,0.07);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 1.25rem;
-        animation: pulseRing 2.2s ease-in-out infinite;
-        border: 1px solid rgba(176,16,16,0.1);
-    }
-
-    .checkin-icon-wrap i {
-        font-size: 1.4rem;
-        color: var(--crimson);
-    }
-
-    .checkin-eyebrow {
-        font-size: 0.68rem;
-        font-weight: 600;
-        letter-spacing: 0.2em;
-        text-transform: uppercase;
-        color: var(--gold);
-        margin-bottom: 0.5rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 7px;
-    }
-    .checkin-eyebrow::before,
-    .checkin-eyebrow::after {
-        content: '';
-        width: 14px;
-        height: 1.5px;
-        background: var(--gold);
-        flex-shrink: 0;
-    }
-
-    .checkin-title {
-        font-family: 'Cormorant Garamond', Georgia, serif;
-        font-size: 1.4rem;
-        font-weight: 700;
-        color: var(--ink);
-        margin-bottom: 0.5rem;
-    }
-
-    .checkin-body {
-        font-size: 0.83rem;
-        font-weight: 300;
-        color: var(--ink-mid);
-        line-height: 1.7;
-    }
 
     /* ── Footer Brand ── */
     .footer-brand {
@@ -418,7 +444,7 @@
 
 <div class="page-shell">
 
-    {{-- ── Logo Image ── --}}
+    {{-- ── Logo ── --}}
     <div class="logo-img-wrap">
         <img src="{{ asset('images/logo.png') }}" alt="En.cafe Logo">
     </div>
@@ -434,19 +460,61 @@
             <span class="table-number">{{ session('table_number') }}</span>
             <div class="table-label">You're all set</div>
         </div>
-        
 
-        {{-- ── CTA Buttons ── --}}
-        <div class="action-area">
-            <a href="{{ route('menu.index') }}" class="btn-encafe btn-primary-ec">
-                <i class="bi bi-cup-hot-fill"></i>
-                Browse Menu
-            </a>
+        {{-- ── Welcome Card ── --}}
+        <div class="welcome-card">
+            <div class="welcome-eyebrow">Welcome</div>
+            <div class="welcome-title">Good to have you <em>here.</em></div>
+            <p class="welcome-text">Browse our menu and place your order whenever you're ready. We'll bring everything right to your table.</p>
+        </div>
+
+    @else
+
+        {{-- ── Staff Instructions Card ── --}}
+        <div class="staff-card">
+            <div class="staff-eyebrow">Staff Instructions</div>
+
+            <div class="staff-icon-wrap">
+                <i class="bi bi-link-45deg"></i>
+            </div>
+
+            <div class="staff-title">Table URL Commands</div>
+
+            {{-- Assign a table --}}
+            <div class="cmd-row">
+                <div>
+                    <div class="cmd-mono">table/<span class="cmd-var">{n}</span>/start</div>
+                    <div class="cmd-sub">Replace <strong style="font-weight:600;">{n}</strong> with the table number</div>
+                </div>
+                <span class="cmd-badge badge-assign">Assign</span>
+            </div>
+
+            {{-- Reset the table --}}
+            <div class="cmd-row">
+                <div>
+                    <div class="cmd-mono">table/reset</div>
+                    <div class="cmd-sub">Clears the active table session</div>
+                </div>
+                <span class="cmd-badge badge-reset">Reset</span>
+            </div>
+
+            <div class="staff-footnote">
+                Enter the path directly in the browser address bar<br>
+                e.g. &nbsp;<code>encafe.com/table/5/start</code>
+            </div>
         </div>
 
     @endif
 
-    {{-- ── Animated logo watermark ── --}}
+    {{-- ── Browse Menu Button (always visible) ── --}}
+    <div class="action-area">
+        <a href="{{ route('menu.index') }}" class="btn-encafe btn-primary-ec">
+            <i class="bi bi-cup-hot-fill"></i>
+            Browse Menu
+        </a>
+    </div>
+
+    {{-- ── Animated Logo Watermark ── --}}
     <div class="logo-animated-wrap" title="En.cafe">
         <div class="logo-wordmark">
             <span class="logo-letter">En</span>
